@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Text;
 using System;
-
+using UnityEngine.SceneManagement;
 
 public class Alou : MonoBehaviour
 {
@@ -21,113 +21,124 @@ public class Alou : MonoBehaviour
     [SerializeField] private float inicial_y = 9999;
     [SerializeField] private int final_y = 9999;
     [SerializeField] private int portNum = 9999;
-
+    [SerializeField] private string currentScene;
+    [SerializeField] private GameObject avatar;
     [SerializeField] private float speed = 3f; // move speed
-    private bool gameStart = false; 
+    [SerializeField] private Vector2 inicialPosition;
+    [SerializeField] private float monitorX;
+    [SerializeField] private float monitorY;
+    [SerializeField] private bool gameStart = true; 
+    [SerializeField] private Rigidbody2D m_Rigidbody;
+    [SerializeField] private float m_Thrust = 20f;
+
     private void Start()
-    {
-        
-        udpClient = new UdpClient(portNum);
+    {   
         print("Start");
-    }
-
-    void Update()
-    {
-        float monitorX = transform.position.x;
-        float monitorY= transform.position.y;
-
+        
         try{
-            IPEndPoint remoteEP = null;
-		    byte[] data = udpClient.Receive(ref remoteEP);
-		    string message = Encoding.ASCII.GetString(data);  
-            //float posx = float.Parse(message); 
-            //float posy = float.Parse(message);
-        
-
-            string aux = message.Replace(" ", "");
-
-            string[] coordenates = aux.Split(','); 
+            udpClient = new UdpClient(portNum);
             
-
-            if(coordenates.Length == 2){
-                float x = float.Parse(coordenates[0]);
-                float y = float.Parse(coordenates[1]);
-                
-                print(gameStart);
-                float x_posi =  x*-1;
-                float y_posi =  y*-1;
-                print($"{x}, {y}");
-
-                if((x_posi > inicial_x && x < final_x)  && (y_posi > inicial_y && y < final_y)){
-                    gameStart = true;
-                    print(gameStart);
-                }
-
-                if(gameStart){
-
-                    monitorX = x*speed;
-                    monitorY = y*speed;
-                    
-                    print($"{monitorX}, {monitorY}");
- 
-
-                if(vertical && horizontal){
-                        Debug.LogWarning("Alou");
-                        //transform.position = new Vector3(monitorX, monitorY, transform.position.z);
-                        transform.position = Vector2.MoveTowards(new Vector2(monitorX, monitorY), transform.position, speed);
-                    }else if(vertical){
-                        transform.position = new Vector3(transform.position.x, monitorY, transform.position.z);
-                    }else if(horizontal){
-                        transform.position = new Vector3(monitorX, transform.position.y, transform.position.z);
-                    }
-                }
-            }
-
-            
-        
         }catch(Exception e){
             print(e);
         }
-        
-        if(transform.position.x >= limitX){
-            this.gameObject.transform.position = new Vector3(limitX, transform.position.y, transform.position.z);
-        }
-        if(transform.position.x <= -limitX){
-            this.gameObject.transform.position = new Vector3(-limitX, transform.position.y, transform.position.z);
-        }
-         if(transform.position.y >= limitY){
-            this.gameObject.transform.position = new Vector3(transform.position.x, limitY, transform.position.z);
-        }
-        if(transform.position.y <= -limitY){
-            this.gameObject.transform.position = new Vector3(transform.position.x, -limitY, transform.position.z);
-        }
-
-        //float posx = float.Parse(message);
-
-        /* -------- Vertical Moviment -------- */
-        if (Input.GetKey(KeyCode.UpArrow)) {
-            print("up");
-            monitorY += speed;
-            this.gameObject.transform.position = new Vector3(transform.position.x, monitorY, transform.position.z);
-        }
-
-        if (Input.GetKey(KeyCode.DownArrow)) {
-            print("down");
-            monitorY -= speed;
-            this.gameObject.transform.position = new Vector3(transform.position.x, monitorY, transform.position.z);
-        }
-
-        if (Input.GetKey(KeyCode.LeftArrow)) {
-            print("left");
-            monitorX -= speed;
-            this.gameObject.transform.position = new Vector3(monitorX, transform.position.y, transform.position.z);
-        }
-
-        if (Input.GetKey(KeyCode.RightArrow)) {
-            print("right");
-            monitorX += speed;
-            this.gameObject.transform.position = new Vector3(monitorX, transform.position.y, transform.position.z);
-        }
-        
     }
+
+    void Update()
+    {   
+
+        currentScene = SceneManager.GetActiveScene().name;
+        if(currentScene == "fase-1" || currentScene == "fase-2" || currentScene == "fase-3" || currentScene == "cofre-1" || currentScene == "cofre-2" || currentScene == "cofre-3" || currentScene == "cofre-4"){
+                  
+            avatar = GameObject.FindGameObjectWithTag("Character");
+
+            m_Rigidbody = avatar.GetComponent<Rigidbody2D>();
+
+            
+            monitorX = avatar.transform.position.x;
+            monitorY= avatar.transform.position.y;
+
+            try{
+                IPEndPoint remoteEP = null;
+                byte[] data = udpClient.Receive(ref remoteEP);
+                string message = Encoding.ASCII.GetString(data);  
+                //float posx = float.Parse(message); 
+                //float posy = float.Parse(message);
+            
+
+                string aux = message.Replace(" ", "");
+
+                string[] coordenates = aux.Split(','); 
+                
+
+                if(coordenates.Length == 2){
+                    print("passou 1");
+                    float x = float.Parse(coordenates[0]);
+                    float y = float.Parse(coordenates[1]);
+                    
+                   // print(gameStart);
+                    float x_posi =  x*-1;
+                    float y_posi =  y*-1;
+                    //print($"{x}, {y}");
+
+                    if((x_posi > inicial_x && x < final_x)  && (y_posi > inicial_y && y < final_y)){
+                        gameStart = true;
+                        print(gameStart);
+                    }
+
+
+                    if(gameStart){
+
+                        
+                        print("passou 2");
+                        monitorX = Mathf.Sign(x)*speed;
+                        monitorY = Mathf.Sign(y)*speed;
+                        
+                        print($"{monitorX}, {monitorY}");
+    
+                    
+                    m_Rigidbody.velocity=(new Vector3(monitorX, monitorY));
+                    // if(vertical && horizontal){
+                    //     print("passou 3");
+                    //         Debug.LogWarning("Alou");
+                    //         //transform.position = new Vector3(monitorX, monitorY, transform.position.z);
+                    //         avatar.transform.position = Vector2.MoveTowards(new Vector2(monitorX, monitorY), avatar.transform.position, speed);
+                    //     }else if(vertical){
+                    //         avatar.transform.position = new Vector3(avatar.transform.position.x, monitorY, avatar.transform.position.z);
+                    //     }else if(horizontal){
+                    //         avatar.transform.position = new Vector3(monitorX, avatar.transform.position.y, avatar.transform.position.z);
+                    //     }
+                    // }
+                }
+            }
+            }catch(Exception e){
+                print(e);
+            }
+            
+            // if(avatar.transform.position.x >= limitX){
+            //     avatar.transform.position = new Vector3(limitX, avatar.transform.position.y, avatar.transform.position.z);
+            // }
+            // if(avatar.transform.position.x <= -limitX){
+            //     avatar.transform.position = new Vector3(-limitX, avatar.transform.position.y, avatar.transform.position.z);
+            // }
+            // if(avatar.transform.position.y >= limitY){
+            //     avatar.transform.position = new Vector3(avatar.transform.position.x, limitY, avatar.transform.position.z);
+            // }
+            // if(avatar.transform.position.y <= -limitY){
+            //     avatar.transform.position = new Vector3(avatar.transform.position.x, -limitY, avatar.transform.position.z);
+            // }
+
+        
+        }
+    }
+    // IEnumerator setAvatarPosition(float monitorX, float monitorY){
+
+    //         avatar = GameObject.FindGameObjectWithTag("Character");
+    //         print("Entrou");
+    //         this.monitorX = monitorX;
+    //         this.monitorY = monitorY;
+    //         new WaitForSeconds(0.1f);
+    //         this.avatar.transform.position = new Vector3(0f, 0f, 0f);
+
+    //         yield return null;
+    // }
 }

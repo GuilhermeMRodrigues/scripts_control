@@ -9,10 +9,12 @@ public class PhaseSelection : MonoBehaviour
     [SerializeField] private string character = "Character";
     [SerializeField] private string scene;
 
-    private void OnTriggerEnter2D(Collider2D other) {
-        if(other.tag == character) {
+    private void OnTriggerEnter2D(Collider2D col) {
+        if(col.gameObject.tag == character) {
+            print("aaaaa");
             changeScene(scene);
         }
+         Debug.LogWarning(col.gameObject.tag + " : " + gameObject.name + " : " + Time.time);
     }
 
     private void changeScene(string scene) {
